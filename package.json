@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "@tauri-apps/api": "^2.12.4"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.12.3"
+  },
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "cd app && npm run dev",
+    "build": "cd app && npm run build"
+  }
+}
