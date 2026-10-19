@@ -301,5 +301,63 @@ mod tests {
         let _ = std::fs::remove_file(&path_a);
         let _ = std::fs::remove_file(&path_b);
     }
+
+    #[test]
+    fn test_export_excel_ipc() {
+        let temp_dir = std::env::temp_dir();
+        let export_path = temp_dir.join("test_reconcile_export.xlsx");
+
+        let export_params = serde_json::json!({
+            "output_path": export_path.to_string_lossy().to_string(),
+            "scope": "all",
+            "summary": {
+                "matched_count": 5,
+                "discrepancies_count": 2,
+                "total_records": 7,
+                "total_variance": -150.0
+            },
+            "records": [
+                {
+                    "id": "rec_1",
+                    "status": "matched",
+                    "status_label": "Matched",
+                    "reference": "INV-101",
+                    "entity": "Acme Corp",
+                    "amount_a": 1000.0,
+                    "amount_b": 1000.0,
+                    "amount_diff": 0.0,
+                    "differences": []
+                },
+                {
+                    "id": "rec_2",
+                    "status": "discrepancy",
+                    "status_label": "Discrepancy",
+                    "reference": "INV-102",
+                    "entity": "Beta LLC",
+                    "amount_a": 500.0,
+                    "amount_b": 350.0,
+                    "amount_diff": -150.0,
+                    "differences": [{"description": "Variance of 150"}]
+                }
+            ],
+            "meta_a": { "file_name": "ledger.csv", "total_rows": 2 },
+            "meta_b": { "file_name": "statement.csv", "total_rows": 2 }
+        });
+
+        let res = invoke_engine("export_excel", export_params, None);
+        assert!(res.is_ok(), "export_excel IPC failed: {:?}", res.err());
+        let data = res.unwrap();
+
+        let saved_path_str = data["saved_path"].as_str().expect("saved_path string");
+        let saved_path = std::path::Path::new(saved_path_str);
+        assert!(saved_path.exists(), "Exported file does not exist on disk");
+
+        let bytes = std::fs::read(saved_path).expect("Read exported file bytes");
+        assert!(bytes.len() > 1000, "Exported file is too small");
+        // Verify ZIP header ('PK') for valid xlsx
+        assert_eq!(&bytes[0..2], b"PK", "File does not begin with valid PK signature");
+
+        let _ = std::fs::remove_file(saved_path);
+    }
 }
 

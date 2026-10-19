@@ -128,6 +128,43 @@ def handle_reconcile(params: dict[str, Any]) -> None:
         emit_result(None, success=False, error=str(e))
 
 
+def handle_export_excel(params: dict[str, Any]) -> None:
+    output_path = params.get("output_path")
+    if not output_path:
+        emit_result(None, success=False, error="Missing required parameter: output_path")
+        return
+
+    summary = params.get("summary", {})
+    records = params.get("records", [])
+    meta_a = params.get("meta_a")
+    meta_b = params.get("meta_b")
+    scope = params.get("scope", "exceptions")
+    overwrite = bool(params.get("overwrite", True))
+
+    try:
+        emit_progress(20, "Building Excel workbook structure...")
+        from reconcile.export.excel_exporter import ExcelExporter
+        emit_progress(50, "Writing sheets, formulas, and auto-filters...")
+        saved_path = ExcelExporter.export(
+            summary=summary,
+            records=records,
+            output_path=output_path,
+            meta_a=meta_a,
+            meta_b=meta_b,
+            scope=scope,
+            overwrite=overwrite,
+        )
+        emit_progress(100, "Workbook verified and saved.")
+        import os
+        file_size = os.path.getsize(saved_path)
+        emit_result({
+            "saved_path": saved_path,
+            "file_size": file_size,
+        })
+    except Exception as e:
+        emit_result(None, success=False, error=str(e))
+
+
 def main(argv: Optional[list[str]] = None) -> None:
     parser = argparse.ArgumentParser(description="RECONCILE Core Engine CLI")
     subparsers = parser.add_subparsers(dest="command")
@@ -158,6 +195,8 @@ def main(argv: Optional[list[str]] = None) -> None:
                 handle_map_columns(params)
             elif cmd == "reconcile":
                 handle_reconcile(params)
+            elif cmd == "export_excel":
+                handle_export_excel(params)
             else:
                 emit_result(None, success=False, error=f"Unknown command: {cmd}")
         except Exception as e:

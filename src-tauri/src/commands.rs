@@ -80,6 +80,37 @@ pub fn pick_file(title: Option<String>, default_path: Option<String>) -> Result<
     Ok(result.map(|p| p.to_string_lossy().to_string()))
 }
 
+#[tauri::command]
+pub fn pick_directory(default_path: Option<String>) -> Result<Option<String>, String> {
+    let mut dialog = rfd::FileDialog::new()
+        .set_title("Select export folder");
+
+    if let Some(ref dp) = default_path {
+        dialog = dialog.set_directory(dp);
+    }
+
+    let result = dialog.pick_folder();
+    Ok(result.map(|p| p.to_string_lossy().to_string()))
+}
+
+#[tauri::command]
+pub async fn export_reconciliation(
+    payload: serde_json::Value,
+    app: AppHandle,
+) -> Result<serde_json::Value, String> {
+    let output_path = payload
+        .get("output_path")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+
+    if output_path.is_empty() {
+        return Err("Export failed: output_path was not provided".to_string());
+    }
+
+    let app_clone = app.clone();
+    tokio_blocking(move || invoke_engine("export_excel", payload, Some(&app_clone))).await
+}
+
 async fn tokio_blocking<F, T>(f: F) -> Result<T, String>
 where
     F: FnOnce() -> Result<T, String> + Send + 'static,

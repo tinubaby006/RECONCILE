@@ -19,6 +19,8 @@ pub fn run() {
             commands::map_columns,
             commands::run_reconciliation,
             commands::pick_file,
+            commands::pick_directory,
+            commands::export_reconciliation,
         ])
         .run(tauri::generate_context!())
         .expect("error while building tauri application");

@@ -89,3 +89,34 @@ export async function listenEngineProgress(
   });
   return unlisten;
 }
+
+export async function pickDirectory(defaultPath?: string): Promise<string | null> {
+  if (!isTauriEnvironment()) {
+    console.warn('[tauriClient] Not running in Tauri environment.');
+    return null;
+  }
+  return await invoke<string | null>('pick_directory', { defaultPath });
+}
+
+export interface ExportPayload {
+  output_path: string;
+  scope: 'exceptions' | 'all';
+  summary: ReconciliationSummary;
+  records: ReconciliationRecord[];
+  meta_a?: DatasetMeta | null;
+  meta_b?: DatasetMeta | null;
+  overwrite?: boolean;
+}
+
+export interface ExportResult {
+  saved_path: string;
+  file_size: number;
+}
+
+export async function exportReconciliation(payload: ExportPayload): Promise<ExportResult> {
+  if (!isTauriEnvironment()) {
+    throw new Error('Tauri environment required to export Excel.');
+  }
+  return await invoke<ExportResult>('export_reconciliation', { payload });
+}
+

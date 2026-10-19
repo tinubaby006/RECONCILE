@@ -420,6 +420,10 @@ export const App: React.FC = () => {
       <ExportModal
         isOpen={isExportOpen}
         onClose={() => setIsExportOpen(false)}
+        summary={summary}
+        records={records}
+        datasetA={datasetA}
+        datasetB={datasetB}
         exceptionsCount={records.filter((r) => r.status !== 'matched').length}
         totalRecordsCount={records.length}
       />
