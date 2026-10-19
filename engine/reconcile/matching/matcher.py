@@ -134,17 +134,35 @@ class Matcher:
         self,
         row_a: dict[str, Any],
         row_b: dict[str, Any],
-        entity_col_a: Optional[str],
-        entity_col_b: Optional[str],
-        amount_col_a: Optional[str],
-        amount_col_b: Optional[str],
-        date_col_a: Optional[str],
-        date_col_b: Optional[str],
+        key_col_a: Optional[str] = None,
+        key_col_b: Optional[str] = None,
+        entity_col_a: Optional[str] = None,
+        entity_col_b: Optional[str] = None,
+        amount_col_a: Optional[str] = None,
+        amount_col_b: Optional[str] = None,
+        date_col_a: Optional[str] = None,
+        date_col_b: Optional[str] = None,
     ) -> Optional[CandidateMatch]:
         """Evaluates whether row_b is a viable candidate for row_a and calculates match confidence score."""
         scores: list[float] = []
         weights: list[float] = []
         reasons: list[str] = []
+
+        # 0. Reference / ID comparison (Candidate heuristic only; never auto-confirms)
+        if key_col_a and key_col_b:
+            raw_k_a = str(row_a.get(key_col_a, "")).strip()
+            raw_k_b = str(row_b.get(key_col_b, "")).strip()
+            num_a = Normalizer.extract_numbers_from_id(raw_k_a)
+            num_b = Normalizer.extract_numbers_from_id(raw_k_b)
+
+            if num_a and num_b and num_a == num_b and len(num_a) >= 3:
+                scores.append(1.0)
+                weights.append(0.2)
+                reasons.append(f"Shared reference digits '{num_a}'")
+            elif num_a and num_b and (num_a in num_b or num_b in num_a) and min(len(num_a), len(num_b)) >= 4:
+                scores.append(0.7)
+                weights.append(0.15)
+                reasons.append("Partial reference match")
 
         # 1. Amount score
         amt_a = Normalizer.normalize_amount(row_a.get(amount_col_a)) if amount_col_a else None

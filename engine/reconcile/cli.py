@@ -3,7 +3,10 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import warnings
 from typing import Any
+
+warnings.filterwarnings("ignore")
 
 from reconcile.loaders import inspect_dataset, load_dataset
 from reconcile.mapping.column_mapper import ColumnMapper
