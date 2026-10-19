@@ -1,0 +1,9 @@
+Reference,Beneficiary,Settlement_Amount,Value_Date,Status
+INV-2024-001,Acme Industrial,14520.50,2024-01-11,Settled
+INV-2024-002,Globex Logistics,8650.00,2024-01-13,Settled
+INV-2024-003,Stark Industries,25400.00,2024-01-16,Settled
+INV-2024-004,Wayne Enterprises,19800.75,2024-01-19,Settled
+INV-2024-005,Umbrella Corp,4300.00,2024-01-21,Settled
+INV-2024-006,Cyberdyne Systems,12000.00,2024-01-23,Settled
+INV-2024-009,Massive Dynamic,7800.00,2024-01-29,Settled
+INV-2024-010,Hooli Telecom,1500.00,2024-01-30,Settled

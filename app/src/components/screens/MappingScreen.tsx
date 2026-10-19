@@ -5,7 +5,8 @@ import {
   ArrowLeft, 
   ArrowRight, 
   CheckCircle2, 
-  HelpCircle
+  HelpCircle,
+  Loader2
 } from 'lucide-react';
 
 interface MappingScreenProps {
@@ -15,6 +16,8 @@ interface MappingScreenProps {
   onUpdateMapping: (index: number, updated: Partial<ColumnMapping>) => void;
   onBack: () => void;
   onReconcile: () => void;
+  isLoading?: boolean;
+  progressMessage?: string;
 }
 
 export const MappingScreen: React.FC<MappingScreenProps> = ({
@@ -24,6 +27,8 @@ export const MappingScreen: React.FC<MappingScreenProps> = ({
   onUpdateMapping,
   onBack,
   onReconcile,
+  isLoading = false,
+  progressMessage = 'Computing suggestions...',
 }) => {
   const getRoleBadgeStyle = (role: ColumnRole) => {
     switch (role) {
@@ -61,21 +66,28 @@ export const MappingScreen: React.FC<MappingScreenProps> = ({
         </div>
       </div>
 
-      {/* Mapping High-Density Table */}
-      <div className="mt-6 bg-white rounded-lg border border-outline-variant/60 shadow-xs overflow-hidden">
-        <table className="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr className="bg-surface-low border-b border-outline-variant/50 text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">
-              <th className="py-2.5 px-4">Dataset A Column</th>
-              <th className="py-2.5 px-4">Sample (Dataset A)</th>
-              <th className="py-2.5 px-4">Dataset B Column</th>
-              <th className="py-2.5 px-4">Sample (Dataset B)</th>
-              <th className="py-2.5 px-4">Field Role</th>
-              <th className="py-2.5 px-4 text-right">Confidence</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {mappings.map((m, idx) => {
+      {/* Mapping High-Density Table or Loader */}
+      {isLoading ? (
+        <div className="mt-6 bg-white rounded-lg border border-outline-variant/60 shadow-xs p-12 flex flex-col items-center justify-center text-center">
+          <Loader2 className="w-8 h-8 text-secondary animate-spin mb-3" />
+          <h2 className="text-sm font-bold text-on-surface">Analyzing Dataset Structure</h2>
+          <p className="text-xs text-on-surface-variant mt-1 max-w-sm">{progressMessage}</p>
+        </div>
+      ) : (
+        <div className="mt-6 bg-white rounded-lg border border-outline-variant/60 shadow-xs overflow-hidden">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="bg-surface-low border-b border-outline-variant/50 text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">
+                <th className="py-2.5 px-4">Dataset A Column</th>
+                <th className="py-2.5 px-4">Sample (Dataset A)</th>
+                <th className="py-2.5 px-4">Dataset B Column</th>
+                <th className="py-2.5 px-4">Sample (Dataset B)</th>
+                <th className="py-2.5 px-4">Field Role</th>
+                <th className="py-2.5 px-4 text-right">Confidence</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {mappings.map((m, idx) => {
               return (
                 <tr key={m.col_a} className="hover:bg-gray-50/80 transition-colors">
                   {/* Col A */}
@@ -158,6 +170,7 @@ export const MappingScreen: React.FC<MappingScreenProps> = ({
           </tbody>
         </table>
       </div>
+      )}
 
       {/* Guidance Note */}
       <div className="mt-4 flex items-start gap-2 text-xs text-on-surface-variant bg-surface-low p-3 rounded border border-secondary/10">

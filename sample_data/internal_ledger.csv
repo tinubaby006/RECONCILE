@@ -1,0 +1,9 @@
+Invoice_No,Vendor_Name,Amount,Invoice_Date,Department
+INV-2024-001,Acme Industrial Ltd,14520.50,2024-01-10,Operations
+INV-2024-002,Globex Logistics,8750.00,2024-01-12,Logistics
+INV-2024-003,Stark Industries,25400.00,2024-01-15,Engineering
+INV-2024-004,Wayne Enterprises,19800.75,2024-01-18,Executive
+INV-2024-005,Umbrella Corp,4300.00,2024-01-20,Research
+INV-2024-006,Cyberdyne Systems,12000.00,2024-01-22,IT Support
+INV-2024-007,Initech Software,6500.00,2024-01-25,Operations
+INV-2024-008,Soylent Trading,3100.25,2024-01-28,Procurement
