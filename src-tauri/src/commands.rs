@@ -3,7 +3,11 @@ use tauri::AppHandle;
 use crate::engine::invoke_engine;
 
 #[tauri::command]
-pub async fn inspect_file(file_path: String, sheet_name: Option<String>) -> Result<serde_json::Value, String> {
+pub async fn inspect_file(
+    file_path: String,
+    sheet_name: Option<String>,
+    header_row: Option<i64>,
+) -> Result<serde_json::Value, String> {
     let p = Path::new(&file_path);
     if !p.exists() {
         return Err(format!("File does not exist: {}", file_path));
@@ -11,7 +15,8 @@ pub async fn inspect_file(file_path: String, sheet_name: Option<String>) -> Resu
 
     let params = serde_json::json!({
         "file_path": file_path,
-        "sheet_name": sheet_name
+        "sheet_name": sheet_name,
+        "header_row": header_row,
     });
 
     // Run synchronous child process on a blocking thread pool
@@ -24,6 +29,8 @@ pub async fn map_columns(
     file_b: String,
     sheet_a: Option<String>,
     sheet_b: Option<String>,
+    header_row_a: Option<i64>,
+    header_row_b: Option<i64>,
     app: AppHandle,
 ) -> Result<serde_json::Value, String> {
     if !Path::new(&file_a).exists() {
@@ -37,7 +44,9 @@ pub async fn map_columns(
         "file_a": file_a,
         "file_b": file_b,
         "sheet_a": sheet_a,
-        "sheet_b": sheet_b
+        "sheet_b": sheet_b,
+        "header_row_a": header_row_a,
+        "header_row_b": header_row_b,
     });
 
     let app_clone = app.clone();

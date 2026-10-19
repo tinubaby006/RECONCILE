@@ -359,5 +359,81 @@ mod tests {
 
         let _ = std::fs::remove_file(saved_path);
     }
+
+    #[test]
+    fn test_reconcile_with_generalized_config_ipc() {
+        let temp_dir = std::env::temp_dir();
+        let path_a = temp_dir.join("test_e2e_gst_a.csv");
+        let path_b = temp_dir.join("test_e2e_gst_b.csv");
+
+        std::fs::write(
+            &path_a,
+            "type,doc_num,taxable,cgst,sgst,cost_center\n\
+             INV,101,10000.00,900.00,900.00,West\n\
+             INV,102,5000.00,450.00,450.00,East\n"
+        ).unwrap();
+
+        std::fs::write(
+            &path_b,
+            "doc_type,inv_num,tax_val,tax_cgst,tax_sgst\n\
+             INV,101,10000.00,900.00,900.00\n\
+             INV,102,5000.00,450.00,458.00\n"
+        ).unwrap();
+
+        let rec_params = serde_json::json!({
+            "file_a": path_a.to_string_lossy().to_string(),
+            "file_b": path_b.to_string_lossy().to_string(),
+            "config": {
+                "keys": [
+                    { "col_a": "type", "col_b": "doc_type" },
+                    { "col_a": "doc_num", "col_b": "inv_num" }
+                ],
+                "metrics": [
+                    { "name": "Taxable", "col_a": "taxable", "col_b": "tax_val", "tolerance": 0.01 },
+                    { "name": "CGST", "col_a": "cgst", "col_b": "tax_cgst", "tolerance": 1.0 },
+                    { "name": "SGST", "col_a": "sgst", "col_b": "tax_sgst", "tolerance": 1.0 }
+                ],
+                "group_by_col": "cost_center",
+                "primary_metric_name": "Taxable"
+            }
+        });
+
+        let rec_res = invoke_engine("reconcile", rec_params, None);
+        assert!(rec_res.is_ok(), "reconcile with generalized config failed: {:?}", rec_res.err());
+        let rec_data = rec_res.unwrap();
+
+        let summary = &rec_data["summary"];
+        assert_eq!(summary["matched_count"], 1);
+        assert_eq!(summary["discrepancies_count"], 1);
+
+        // Verify multi-metric variances survive the IPC boundary
+        let metric_vars = &summary["metric_variances"];
+        assert!(metric_vars.get("Taxable").is_some());
+        assert!(metric_vars.get("CGST").is_some());
+        assert!(metric_vars.get("SGST").is_some());
+        assert_eq!(metric_vars["SGST"]["discrepancy_count"], 1);
+        assert_eq!(metric_vars["SGST"]["gross_variance"], 8.0);
+
+        // Verify records have composite keys, field diffs, and metrics
+        let records = rec_data["records"].as_array().expect("records array");
+        assert_eq!(records.len(), 2);
+
+        let r102 = records.iter().find(|r| {
+            r["reference"].as_str().map(|s| s.contains("102")).unwrap_or(false)
+        }).expect("record 102");
+        assert_eq!(r102["status"], "discrepancy");
+        assert_eq!(r102["differences"][0]["field"], "SGST");
+        assert_eq!(r102["differences"][0]["delta"], 8.0);
+        assert_eq!(r102["metrics_a"]["SGST"], 450.0);
+        assert_eq!(r102["metrics_b"]["SGST"], 458.0);
+
+        // Verify dynamic grouping survives IPC boundary
+        let grouped = &rec_data["grouped_records"];
+        assert!(grouped.get("West").is_some());
+        assert!(grouped.get("East").is_some());
+
+        let _ = std::fs::remove_file(&path_a);
+        let _ = std::fs::remove_file(&path_b);
+    }
 }
 
