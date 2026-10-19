@@ -1,6 +1,18 @@
-@"
+# Node & Frontend
 node_modules/
 dist/
+app/dist/
 .env
+
+# Tauri & Rust
 src-tauri/target/
-"@ | Set-Content .gitignore
+
+# Python & Engine
+engine/.venv/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
